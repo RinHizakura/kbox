@@ -231,6 +231,10 @@ const struct kbox_host_nrs HOST_NRS_X86_64 = {
     .getpid = 39,
     .getppid = 110,
     .gettid = 186,
+    .setpgid = 109,
+    .getpgid = 121,
+    .getsid = 124,
+    .setsid = 112,
     .clock_gettime = 228,
     .clock_getres = 229,
     .gettimeofday = 96,
@@ -387,6 +391,10 @@ const struct kbox_host_nrs HOST_NRS_AARCH64 = {
     .getpid = 172,
     .getppid = 173,
     .gettid = 178,
+    .setpgid = 154,
+    .getpgid = 155,
+    .getsid = 156,
+    .setsid = 157,
     .clock_gettime = 113,
     .clock_getres = 114,
     .gettimeofday = -1,
@@ -612,6 +620,10 @@ const char *syscall_name_from_nr(const struct kbox_host_nrs *h, int nr)
     CHECK(getpid);
     CHECK(getppid);
     CHECK(gettid);
+    CHECK(setpgid);
+    CHECK(getpgid);
+    CHECK(getsid);
+    CHECK(setsid);
     CHECK(clock_gettime);
     CHECK(clock_getres);
     CHECK(gettimeofday);

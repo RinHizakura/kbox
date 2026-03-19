@@ -3199,17 +3199,37 @@ static struct kbox_dispatch forward_utimensat(
 #ifndef TIOCSWINSZ
 #define TIOCSWINSZ 0x5414
 #endif
+#ifndef TIOCGPGRP
+#define TIOCGPGRP 0x540F
+#endif
+#ifndef TIOCSPGRP
+#define TIOCSPGRP 0x5410
+#endif
+#ifndef TIOCSCTTY
+#define TIOCSCTTY 0x540E
+#endif
 
 static struct kbox_dispatch forward_ioctl(
     const struct kbox_seccomp_notif *notif,
     struct kbox_supervisor_ctx *ctx)
 {
     long fd = to_c_long_arg(notif->data.args[0]);
+    long cmd = to_c_long_arg(notif->data.args[1]);
     long lkl_fd = kbox_fd_table_get_lkl(ctx->fd_table, fd);
 
-    /* Not in our FD table -- let the host handle it. */
-    if (lkl_fd < 0)
+    if (lkl_fd < 0) {
+        /*
+         * Host FD (stdin/stdout/stderr or pipe).  Most ioctls pass
+         * through to the host kernel.  However, job-control ioctls
+         * (TIOCSPGRP/TIOCGPGRP) fail with EPERM under seccomp-unotify
+         * because the supervised child is not the session leader.
+         * Return ENOTTY so shells fall back to non-job-control mode
+         * instead of aborting.
+         */
+        if (cmd == TIOCSPGRP || cmd == TIOCGPGRP || cmd == TIOCSCTTY)
+            return kbox_dispatch_errno(ENOTTY);
         return kbox_dispatch_continue();
+    }
 
     (void) lkl_fd;
 
@@ -3925,6 +3945,14 @@ struct kbox_dispatch kbox_dispatch_syscall(struct kbox_supervisor_ctx *ctx,
         return kbox_dispatch_value(0);
     if (nr == h->gettid)
         return kbox_dispatch_value(1);
+    if (nr == h->setpgid)
+        return kbox_dispatch_continue();
+    if (nr == h->getpgid)
+        return kbox_dispatch_continue();
+    if (nr == h->getsid)
+        return kbox_dispatch_continue();
+    if (nr == h->setsid)
+        return kbox_dispatch_continue();
 
     /* === Time === */
 

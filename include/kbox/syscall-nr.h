@@ -100,6 +100,7 @@ struct kbox_host_nrs {
 
     /* Process info */
     int getpid, getppid, gettid;
+    int setpgid, getpgid, getsid, setsid;
 
     /* Time */
     int clock_gettime, clock_getres, gettimeofday;
